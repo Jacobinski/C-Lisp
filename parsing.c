@@ -19,8 +19,8 @@ mpc_parser_t* program    = mpc_new("program");
 /* Define the language rules */
 mpca_lang(MPCA_LANG_DEFAULT,
     "                                                           \
-    number      : /-?[0-9]+/ ;                                  \
-    operator    : '+' | '-' | '*' | '/' ;                       \
+    number      : /-?[0-9]+(\\.[0-9]+)?/ ;                      \
+    operator    : '+' | '-' | '*' | '/' | '%' ;                 \
     expression  : <number> | '(' <operator> <expression>+ ')' ; \
     program     : /^/ <operator> <expression>+ /$/ ;            \
     ",
