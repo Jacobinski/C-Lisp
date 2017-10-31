@@ -1,9 +1,30 @@
+/*---------------------------------------------------------------------
+ *                               HEADERS
+ *---------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <editline/readline.h>  //TODO: #ifdef _WIN32 doesn't need readline.h to edit lines. Increase portability.
 
 #include "mpc.h"
 
+/*---------------------------------------------------------------------
+ *                          FUNCTION DECLARATIONS
+ *---------------------------------------------------------------------*/
+long evaluate_tree
+    (
+    mpc_ast_t* tree
+    );
+
+long evaluate_operator
+    (
+    long x,
+    long y,
+    char* operator
+    );
+
+/*---------------------------------------------------------------------
+ *                              FUNCTIONS
+ *---------------------------------------------------------------------*/
 int main
     (
     int argc,
@@ -64,4 +85,25 @@ while(1)
 
 /* Free the parsers */
 mpc_cleanup(4, number, operator, expression, program);
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+long evaluate_tree
+    (
+    mpc_ast_t* tree
+    )
+{
+return 0;
+}
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+long evaluate_operator
+    (
+    long x,
+    long y,
+    char* operator
+    )
+{
+return 0;
 }
