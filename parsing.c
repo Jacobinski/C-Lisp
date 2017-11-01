@@ -10,12 +10,12 @@
 /*---------------------------------------------------------------------
  *                          FUNCTION DECLARATIONS
  *---------------------------------------------------------------------*/
-long evaluate_tree
+long evaluate
     (
-    mpc_ast_t* tree
+    mpc_ast_t* t
     );
 
-long evaluate_operator
+long evaluate_op
     (
     long x,
     long y,
@@ -40,7 +40,7 @@ mpc_parser_t* program    = mpc_new("program");
 /* Define the language rules */
 mpca_lang(MPCA_LANG_DEFAULT,
     "                                                           \
-    number      : /-?[0-9]+(\\.[0-9]+)?/ ;                      \
+    number      : /-?[0-9]+/ ;                      \
     operator    : '+' | '-' | '*' | '/' | '%' ;                 \
     expression  : <number> | '(' <operator> <expression>+ ')' ; \
     program     : /^/ <operator> <expression>+ /$/ ;            \
@@ -69,7 +69,9 @@ while(1)
     if( mpc_parse("<stdin>", input, program, &r) )
         {
         /* Success: Print the abstract syntax tree */
-        mpc_ast_print(r.output);
+        //mpc_ast_print(r.output);
+        long result = evaluate(r.output);
+        printf("%li\n", result);
         mpc_ast_delete(r.output);
         }
     else
@@ -89,21 +91,47 @@ mpc_cleanup(4, number, operator, expression, program);
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-long evaluate_tree
+long evaluate
     (
-    mpc_ast_t* tree
+    mpc_ast_t* t
     )
 {
-return 0;
+char* operator;
+long number;
+
+/* Base Case: The tree's node is a number */
+if( strstr(t->tag, "number") )
+    {
+    return atoi(t->contents);
+    }
+
+/* Recursion: Determine the operator, then use it on all children
+ *      Note: '(' is the first child,
+ *            the operator is the second child,
+ *            numbers are the next tags with the 'expr' tag */
+operator = t->children[1]->contents;
+number = evaluate(t->children[2]);
+
+for( int ii = 3; strstr(t->children[ii]->tag, "expr"); ++ii )
+    {
+    number = evaluate_op(number, evaluate(t->children[ii]), operator);
+    }
+
+return number;
 }
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-long evaluate_operator
+long evaluate_op
     (
     long x,
     long y,
     char* operator
     )
 {
+if( strcmp(operator, "+") == 0 ) { return x + y; }
+if( strcmp(operator, "-") == 0 ) { return x - y; }
+if( strcmp(operator, "*") == 0 ) { return x * y; }
+if( strcmp(operator, "/") == 0 ) { return x / y; }
+if( strcmp(operator, "%") == 0 ) { return x % y; }
 return 0;
 }
