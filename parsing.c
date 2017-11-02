@@ -10,13 +10,13 @@
 /*---------------------------------------------------------------------
  * TYPE DECLARATIONS
  *---------------------------------------------------------------------*/
-enum lval_type_field
+typedef int lval_type_field; enum
     {
     LVAL_NUM,
     LVAL_ERR
     };
 
-enum lval_err_field
+typedef int lval_err_field; enum
     {
     LVAL_ERR_DIV_ZERO,
     LVAL_ERR_BAD_OP,
@@ -55,6 +55,16 @@ lval lval_create_num
 lval lval_create_err
     (
     lval_err_field err
+    );
+
+void lval_print
+    (
+    lval val
+    );
+
+void lval_println
+    (
+    lval val
     );
 
 /*---------------------------------------------------------------------
@@ -202,3 +212,44 @@ lisp_value.err = err;
 
 return lisp_value;
 }
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+void lval_print
+    (
+    lval val
+    )
+{
+switch( val.type )
+    {
+    case LVAL_NUM:
+        printf("%li\n", val.num);
+        break;
+
+    case LVAL_ERR:
+        if( val.err == LVAL_ERR_DIV_ZERO )
+            printf("Error: Division by zero.");
+        else if( val.err == LVAL_ERR_BAD_OP )
+            printf("Error: Invalid operation.");
+        else if( val.err == LVAL_ERR_BAD_NUM )
+            printf("Error: Invalid number.");
+        else
+            printf("Error: Unknown Error.");
+        break;
+
+    default:
+        printf("Error: Unable to evaluate lval type.");
+        break;
+    }
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+void lval_println
+    (
+    lval val
+    )
+{
+lval_print(val);
+putchar('\n');
+};
