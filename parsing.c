@@ -35,24 +35,24 @@ typedef struct
 /*---------------------------------------------------------------------
  * FUNCTION DECLARATIONS
  *---------------------------------------------------------------------*/
-long evaluate
+lval evaluate
     (
     mpc_ast_t* t
     );
 
-long evaluate_op
+lval evaluate_op
     (
-    long x,
-    long y,
+    lval x,
+    lval y,
     char* operator
     );
 
-lval lval_create_num
+lval lval_num
     (
     long num
     );
 
-lval lval_create_err
+lval lval_err
     (
     lval_err_field err
     );
@@ -114,8 +114,8 @@ while(1)
     if( mpc_parse("<stdin>", input, program, &r) )
         {
         /* Success: Evaluate the expression */
-        long result = evaluate(r.output);
-        printf("%li\n", result);
+        lval result = evaluate(r.output);
+        lval_println(result);
         mpc_ast_delete(r.output);
         }
     else
@@ -135,55 +135,72 @@ mpc_cleanup(4, number, operator, expression, program);
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-long evaluate
+lval evaluate
     (
     mpc_ast_t* t
     )
 {
 char* operator;
-long number;
+lval val;
 
 /* Base Case: The tree's node is a number */
 if( strstr(t->tag, "number") )
     {
-    return atoi(t->contents);
+    /* Convert str->long, then check stdlib's errno for overflow */
+    long num;
+
+    errno = 0;
+    num = strtol(t->contents, NULL, 10);
+    return errno != ERANGE
+        ? lval_num(num)
+        : lval_err(LVAL_ERR_BAD_NUM);
     }
 
-/* Recursion: Determine the operator, then use it on all children
- *      Note: '(' is the first child,
- *            the operator is the second child,
- *            numbers are the next tags with the 'expr' tag */
+/* Recursion: Determine the operator, then use it on all children.
+ *            1st child: '('
+ *            2nd child: an operator
+ *            Nth child: Numbers/expressions. These are ended by the non-expr ')' */
 operator = t->children[1]->contents;
-number = evaluate(t->children[2]);
+val = evaluate(t->children[2]);
 
 for( int ii = 3; strstr(t->children[ii]->tag, "expr"); ++ii )
     {
-    number = evaluate_op(number, evaluate(t->children[ii]), operator);
+    val = evaluate_op(val, evaluate(t->children[ii]), operator);
     }
 
-return number;
+return val;
 }
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-long evaluate_op
+lval evaluate_op
     (
-    long x,
-    long y,
+    lval x,
+    lval y,
     char* operator
     )
 {
-if( strcmp(operator, "+") == 0 ) { return x + y; }
-if( strcmp(operator, "-") == 0 ) { return x - y; }
-if( strcmp(operator, "*") == 0 ) { return x * y; }
-if( strcmp(operator, "/") == 0 ) { return x / y; }
-if( strcmp(operator, "%") == 0 ) { return x % y; }
-return 0;
+if( LVAL_ERR == x.type ) { return x; }
+if( LVAL_ERR == y.type ) { return y; }
+
+//FIXME: Error check for overlow in the float values
+if( strcmp(operator, "+") == 0 ) { return lval_num(x.num + y.num); }
+if( strcmp(operator, "-") == 0 ) { return lval_num(x.num - y.num); }
+if( strcmp(operator, "*") == 0 ) { return lval_num(x.num * y.num); }
+if( strcmp(operator, "%") == 0 ) { return lval_num(x.num % y.num); }
+if( strcmp(operator, "/") == 0 )
+    {
+    return y.num == 0
+        ? lval_err(LVAL_ERR_DIV_ZERO)
+        : lval_num(x.num / y.num);
+    }
+
+return lval_err(LVAL_ERR_BAD_OP);
 }
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-lval lval_create_num
+lval lval_num
     (
     long num
     )
@@ -199,7 +216,7 @@ return lisp_value;
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-lval lval_create_err
+lval lval_err
     (
     lval_err_field err
     )
@@ -223,7 +240,7 @@ void lval_print
 switch( val.type )
     {
     case LVAL_NUM:
-        printf("%li\n", val.num);
+        printf("%li", val.num);
         break;
 
     case LVAL_ERR:
