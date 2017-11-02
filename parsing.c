@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------
- *                               HEADERS
+ * HEADERS
  *---------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +8,32 @@
 #include "mpc.h"
 
 /*---------------------------------------------------------------------
- *                          FUNCTION DECLARATIONS
+ * TYPE DECLARATIONS
+ *---------------------------------------------------------------------*/
+enum lval_type_field
+    {
+    LVAL_NUM,
+    LVAL_ERR
+    };
+
+enum lval_err_field
+    {
+    LVAL_ERR_DIV_ZERO,
+    LVAL_ERR_BAD_OP,
+    LVAL_ERR_BAD_NUM,
+
+    LVAL_ERR_NONE
+    };
+
+typedef struct
+    {
+    lval_type_field type;
+    lval_err_field err;
+    long num;
+    } lval;
+
+/*---------------------------------------------------------------------
+ * FUNCTION DECLARATIONS
  *---------------------------------------------------------------------*/
 long evaluate
     (
@@ -22,8 +47,18 @@ long evaluate_op
     char* operator
     );
 
+lval lval_create_num
+    (
+    long num
+    );
+
+lval lval_create_err
+    (
+    lval_err_field err
+    );
+
 /*---------------------------------------------------------------------
- *                              FUNCTIONS
+ * FUNCTIONS
  *---------------------------------------------------------------------*/
 int main
     (
@@ -68,8 +103,7 @@ while(1)
     /* Parse the user input */
     if( mpc_parse("<stdin>", input, program, &r) )
         {
-        /* Success: Print the abstract syntax tree */
-        //mpc_ast_print(r.output);
+        /* Success: Evaluate the expression */
         long result = evaluate(r.output);
         printf("%li\n", result);
         mpc_ast_delete(r.output);
@@ -119,6 +153,7 @@ for( int ii = 3; strstr(t->children[ii]->tag, "expr"); ++ii )
 
 return number;
 }
+
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
 long evaluate_op
@@ -134,4 +169,36 @@ if( strcmp(operator, "*") == 0 ) { return x * y; }
 if( strcmp(operator, "/") == 0 ) { return x / y; }
 if( strcmp(operator, "%") == 0 ) { return x % y; }
 return 0;
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval lval_create_num
+    (
+    long num
+    )
+{
+lval lisp_value;
+
+lisp_value.type = LVAL_NUM;
+lisp_value.num = num;
+lisp_value.err = LVAL_ERR_NONE;
+
+return lisp_value;
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval lval_create_err
+    (
+    lval_err_field err
+    )
+{
+lval lisp_value;
+
+lisp_value.type = LVAL_ERR;
+lisp_value.num = 0;
+lisp_value.err = err;
+
+return lisp_value;
 }
