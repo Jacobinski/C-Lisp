@@ -93,14 +93,12 @@ mpca_lang(MPCA_LANG_DEFAULT,
     number, operator, expression, program);
 
 /* Print out system information */
-puts("C Lisp Version 0.1.0");
+puts("C Lisp Version 0.0.0");
 puts("Press Ctrl+C to Exit\n");
 
 while(1)
     {
-    /*
-     * This REPL loop takes a user input and parses it.
-     */
+    /* This REPL loop takes a user input and parses it */
     char* input;
     mpc_result_t r;
 
@@ -183,7 +181,7 @@ lval evaluate_op
 if( LVAL_ERR == x.type ) { return x; }
 if( LVAL_ERR == y.type ) { return y; }
 
-//FIXME: Error check for overlow in the float values
+// FIXME: Error check for overlow in the float values
 if( strcmp(operator, "+") == 0 ) { return lval_num(x.num + y.num); }
 if( strcmp(operator, "-") == 0 ) { return lval_num(x.num - y.num); }
 if( strcmp(operator, "*") == 0 ) { return lval_num(x.num * y.num); }
