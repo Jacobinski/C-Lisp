@@ -16,6 +16,7 @@ typedef int lval_type_field; enum
     LVAL_ERR
     };
 
+/*
 typedef int lval_err_field; enum
     {
     LVAL_ERR_DIV_ZERO,
@@ -24,12 +25,18 @@ typedef int lval_err_field; enum
 
     LVAL_ERR_NONE
     };
+*/
 
 typedef struct
     {
     lval_type_field type;
-    lval_err_field err;
+
+    /* Data for different lval_types */
+    char* err;
+    char* sym;
     long num;
+    struct lval** cell;
+    int cell_count;
     } lval;
 
 /*---------------------------------------------------------------------
