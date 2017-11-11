@@ -77,20 +77,22 @@ int main
     )
 {
 /* Create language parsers */
-mpc_parser_t* number     = mpc_new("number");
-mpc_parser_t* operator   = mpc_new("operator");
-mpc_parser_t* expression = mpc_new("expression");
-mpc_parser_t* program    = mpc_new("program");
+mpc_parser_t* number      = mpc_new("number");
+mpc_parser_t* symbol      = mpc_new("symbol");
+mpc_parser_t* sexpression = mpc_new("sexpression");
+mpc_parser_t* expression  = mpc_new("expression");
+mpc_parser_t* program     = mpc_new("program");
 
 /* Define the language rules */
 mpca_lang(MPCA_LANG_DEFAULT,
-    "                                                           \
-    number      : /-?[0-9]+/ ;                      \
-    operator    : '+' | '-' | '*' | '/' | '%' ;                 \
-    expression  : <number> | '(' <operator> <expression>+ ')' ; \
-    program     : /^/ <operator> <expression>+ /$/ ;            \
+    "                                                   \
+    number      : /-?[0-9]+/ ;                          \
+    symbol      : '+' | '-' | '*' | '/' | '%' ;         \
+    sexpression : '(' <expression>* ')' ;               \
+    expression  : <number> | <symbol> | <sexpression> ; \
+    program     : /^/ <expression>* /$/ ;               \
     ",
-    number, operator, expression, program);
+    number, symbol, sexpression, expression, program);
 
 /* Print out system information */
 puts("C Lisp Version 0.0.0");
@@ -128,7 +130,7 @@ while(1)
     }
 
 /* Free the parsers */
-mpc_cleanup(4, number, operator, expression, program);
+mpc_cleanup(5, number, symbol, sexpression, expression, program);
 }
 
 /*---------------------------------------------------------------------
