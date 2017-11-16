@@ -12,24 +12,20 @@
  *---------------------------------------------------------------------*/
 typedef int lval_type_field; enum
     {
+    LVAL_ERR,
     LVAL_NUM,
-    LVAL_ERR
-    };
-
-typedef int lval_err_field; enum
-    {
-    LVAL_ERR_DIV_ZERO,
-    LVAL_ERR_BAD_OP,
-    LVAL_ERR_BAD_NUM,
-
-    LVAL_ERR_NONE
+    LVAL_SEXPR,
+    LVAL_SYM
     };
 
 typedef struct
     {
     lval_type_field type;
-    lval_err_field err;
+    char* err;
+    char* sym;
     long num;
+    int cell_count;
+    struct lval** cell;
     } lval;
 
 /*---------------------------------------------------------------------
@@ -47,14 +43,29 @@ lval evaluate_op
     char* operator
     );
 
-lval lval_num
+lval* lval_num
     (
     long num
     );
 
-lval lval_err
+lval* lval_err
     (
-    lval_err_field err
+    char* msg
+    );
+
+lval* lval_sym
+    (
+    char* sym
+    );
+
+lval* lval_sexpr
+    (
+    void
+    );
+
+void lval_del
+    (
+    lval* v
     );
 
 void lval_print
@@ -200,34 +211,102 @@ return lval_err(LVAL_ERR_BAD_OP);
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-lval lval_num
+lval* lval_num
     (
     long num
     )
 {
-lval lisp_value;
+lval* lisp_value;
 
-lisp_value.type = LVAL_NUM;
-lisp_value.num = num;
-lisp_value.err = LVAL_ERR_NONE;
+lisp_value = malloc(sizeof(lval));
+lisp_value->type = LVAL_NUM;
+lisp_value->num = num;
 
 return lisp_value;
 }
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-lval lval_err
+lval* lval_err
     (
-    lval_err_field err
+    char* msg
     )
 {
-lval lisp_value;
+lval* lisp_value;
 
-lisp_value.type = LVAL_ERR;
-lisp_value.num = 0;
-lisp_value.err = err;
+lisp_value = malloc(sizeof(lval));
+lisp_value->type = LVAL_ERR;
+lisp_value->err = malloc(strlen(msg) + 1);
+strcpy(lisp_value->err, msg)
 
 return lisp_value;
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval* lval_sym
+    (
+    char* sym
+    )
+{
+lval* lisp_value;
+
+lisp_value = malloc(sizeof(lval));
+lisp_value->type = LVAL_SYM;
+lisp_value->sym = malloc(strlen(sym) + 1);
+strcpy(lisp_value->sym, sym)
+
+return lisp_value;
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval* lval_sexpr
+    (
+    void
+    )
+{
+lval* lisp_value;
+
+lisp_value = malloc(sizeof(lval));
+lisp_value->type = LVAL_SEXPR;
+lisp_value->cell = NULL;
+lisp_value->cell_count = 0;
+
+return lisp_value;
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+void lval_del
+    (
+    lval* v
+    )
+{
+switch(v->type)
+    {
+    /* Do nothing special for Num */
+    case LVAL_NUM:
+        break;
+
+    /* Free string data for Err and Sym */
+    case LVAL_ERR: free(v->err):
+        break;
+    case LVAL_SYM: free(v->sym):
+        break;
+
+    /* Free all elements in Sexpr */
+    case LVAL_SEXPR:
+        for( int i = 0; i < v->cell_count; ++i )
+            {
+            lval_del(v->cell[i]);
+            }
+        /* Free the array of pointers */
+        free(v->cell);
+        break;
+    }
+
+free(v);
 }
 
 /*---------------------------------------------------------------------
