@@ -31,6 +31,7 @@ typedef struct
 /*---------------------------------------------------------------------
  * FUNCTION DECLARATIONS
  *---------------------------------------------------------------------*/
+/* Evaluators */
 lval evaluate
     (
     mpc_ast_t* t
@@ -43,6 +44,23 @@ lval evaluate_op
     char* operator
     );
 
+lval* lval_read
+    (
+    mpc_ast_t* t
+    );
+
+lval* lval_read_num
+    (
+    mpc_ast_t* t
+    );
+
+lval* lval_add
+    (
+    mpc_ast_t* v,
+    mpc_ast_t* x
+    );
+
+/* Constructors */
 lval* lval_num
     (
     long num
@@ -68,6 +86,7 @@ void lval_del
     lval* v
     );
 
+/* Utility */
 void lval_print
     (
     lval val
@@ -207,6 +226,66 @@ if( strcmp(operator, "/") == 0 )
     }
 
 return lval_err(LVAL_ERR_BAD_OP);
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval* lval_read
+    (
+    mpc_ast_t* t
+    )
+{
+/* If Symbol or Number return conversion to that type */
+if( strstr(t->tag, "number") ) { return lval_read_num(t); }
+if( strstr(t->tag, "symbol") ) { return lval_sym(t->contents); }
+
+/* If root (>) or sexpr then create empty list */
+lval* x = NULL;
+if( strcmp(t->tag, ">") == 0 ) { x = lval_sexpr(); }
+if( strstr(t->tag, "sexpr") )  { x = lval_sexpr(); }
+
+/* Fill empty list with valid expressions from children */
+for( int i = 0; i < t->childen_num; ++i )
+    {
+    // TODO: Why do we ignore brackets?
+    if( strcmp(t->children[i]->contents, "(") == 0 ) { continue; }
+    if( strcmp(t->children[i]->contents, ")") == 0 ) { continue; }
+    if( strcmp(t->children[i]->tag,  "regex") == 0 ) { continue; }
+    x = lval_add(x, lval_read(t->children[i]));
+    }
+
+return x;
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval* lval_read_num
+    (
+    mpc_ast_t* t
+    )
+{
+/* Convert str->long, then check stdlib's errno for overflow */
+long num;
+
+errno = 0;
+num = strtol(t->contents, NULL, 10);
+return errno != ERANGE
+    ? lval_num(num)
+    : lval_err("Invalid number");
+}
+
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+lval* lval_add
+    (
+    mpc_ast_t* v,
+    mpc_ast_t* x
+    )
+{
+v->cell_count++;
+v->cell = realloc(v->cell, sizeof(lval*) * v->cell_count);
+v->cell[v->cell_count - 1] = x;
+return v;
 }
 
 /*---------------------------------------------------------------------
