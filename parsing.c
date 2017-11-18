@@ -87,14 +87,21 @@ void lval_del
     );
 
 /* Utility */
+void lval_expr_print
+    (
+    lval* v,
+    char open,
+    char close
+    );
+
 void lval_print
     (
-    lval val
+    lval* v
     );
 
 void lval_println
     (
-    lval val
+    lval* v
     );
 
 /*---------------------------------------------------------------------
@@ -362,7 +369,7 @@ void lval_del
     lval* v
     )
 {
-switch(v->type)
+switch( v->type )
     {
     /* Do nothing special for Num */
     case LVAL_NUM:
@@ -390,31 +397,38 @@ free(v);
 
 /*---------------------------------------------------------------------
  *---------------------------------------------------------------------*/
-void lval_print
+void lval_expr_print
     (
-    lval val
+    lval* v,
+    char open,
+    char close
     )
 {
-switch( val.type )
+putchar(open);
+for( int i = 0; i < v->cell_count; ++i )
     {
-    case LVAL_NUM:
-        printf("%li", val.num);
-        break;
+    /* Print children with spaces inbetween */
+    lval_print(v->cell[i]);
+    if( i != ( v->cell_count - 1 ) )
+        putchar(' ');
+    }
+putchar(close);
+}
 
-    case LVAL_ERR:
-        if( val.err == LVAL_ERR_DIV_ZERO )
-            printf("Error: Division by zero.");
-        else if( val.err == LVAL_ERR_BAD_OP )
-            printf("Error: Invalid operation.");
-        else if( val.err == LVAL_ERR_BAD_NUM )
-            printf("Error: Invalid number.");
-        else
-            printf("Error: Unknown Error.");
-        break;
-
-    default:
-        printf("Error: Unable to evaluate lval type.");
-        break;
+/*---------------------------------------------------------------------
+ *---------------------------------------------------------------------*/
+void lval_print
+    (
+    lval* v
+    )
+{
+switch( v->type )
+    {
+    case LVAL_NUM:      printf("%li", v->num); break;
+    case LVAL_ERR:      printf("Error: %s", v->err); break;
+    case LVAL_SYM:      printf("%s", v->sym); break;
+    case LVAL_SEXPR:    lval_expr_print(v, '(', ')'); break;
+    default:            break;
     }
 }
 
@@ -422,9 +436,9 @@ switch( val.type )
  *---------------------------------------------------------------------*/
 void lval_println
     (
-    lval val
+    lval* v
     )
 {
-lval_print(val);
+lval_print(v);
 putchar('\n');
 };
