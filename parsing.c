@@ -56,8 +56,8 @@ lval* lval_read_num
 
 lval* lval_add
     (
-    mpc_ast_t* v,
-    mpc_ast_t* x
+    lval* v,
+    lval* x
     );
 
 /* Constructors */
@@ -150,9 +150,10 @@ while(1)
     /* Parse the user input */
     if( mpc_parse("<stdin>", input, program, &r) )
         {
-        /* Success: Evaluate the expression */
-        lval result = evaluate(r.output);
-        lval_println(result);
+        /* Success: Print the expression */
+        lval* x = lval_read(r.output);
+        lval_println(x);
+        lval_del(x);
         mpc_ast_delete(r.output);
         }
     else
@@ -177,13 +178,14 @@ lval evaluate
     mpc_ast_t* t
     )
 {
+/*
 char* operator;
 lval val;
 
-/* Base Case: The tree's node is a number */
+// Base Case: The tree's node is a number
 if( strstr(t->tag, "number") )
     {
-    /* Convert str->long, then check stdlib's errno for overflow */
+    // Convert str->long, then check stdlib's errno for overflow
     long num;
 
     errno = 0;
@@ -193,10 +195,10 @@ if( strstr(t->tag, "number") )
         : lval_err(LVAL_ERR_BAD_NUM);
     }
 
-/* Recursion: Determine the operator, then use it on all children.
- *            1st child: '('
- *            2nd child: an operator
- *            Nth child: Numbers/expressions. These are ended by the non-expr ')' */
+// Recursion: Determine the operator, then use it on all children.
+//            1st child: '('
+//            2nd child: an operator
+//            Nth child: Numbers/expressions. These are ended by the non-expr ')'
 operator = t->children[1]->contents;
 val = evaluate(t->children[2]);
 
@@ -206,6 +208,7 @@ for( int ii = 3; strstr(t->children[ii]->tag, "expr"); ++ii )
     }
 
 return val;
+*/
 }
 
 /*---------------------------------------------------------------------
@@ -217,6 +220,7 @@ lval evaluate_op
     char* operator
     )
 {
+/*
 if( LVAL_ERR == x.type ) { return x; }
 if( LVAL_ERR == y.type ) { return y; }
 
@@ -233,6 +237,7 @@ if( strcmp(operator, "/") == 0 )
     }
 
 return lval_err(LVAL_ERR_BAD_OP);
+*/
 }
 
 /*---------------------------------------------------------------------
@@ -252,7 +257,7 @@ if( strcmp(t->tag, ">") == 0 ) { x = lval_sexpr(); }
 if( strstr(t->tag, "sexpr") )  { x = lval_sexpr(); }
 
 /* Fill empty list with valid expressions from children */
-for( int i = 0; i < t->childen_num; ++i )
+for( int i = 0; i < t->children_num; ++i )
     {
     // TODO: Why do we ignore brackets?
     if( strcmp(t->children[i]->contents, "(") == 0 ) { continue; }
@@ -285,8 +290,8 @@ return errno != ERANGE
  *---------------------------------------------------------------------*/
 lval* lval_add
     (
-    mpc_ast_t* v,
-    mpc_ast_t* x
+    lval* v,
+    lval* x
     )
 {
 v->cell_count++;
@@ -323,7 +328,7 @@ lval* lisp_value;
 lisp_value = malloc(sizeof(lval));
 lisp_value->type = LVAL_ERR;
 lisp_value->err = malloc(strlen(msg) + 1);
-strcpy(lisp_value->err, msg)
+strcpy(lisp_value->err, msg);
 
 return lisp_value;
 }
@@ -340,7 +345,7 @@ lval* lisp_value;
 lisp_value = malloc(sizeof(lval));
 lisp_value->type = LVAL_SYM;
 lisp_value->sym = malloc(strlen(sym) + 1);
-strcpy(lisp_value->sym, sym)
+strcpy(lisp_value->sym, sym);
 
 return lisp_value;
 }
@@ -376,9 +381,9 @@ switch( v->type )
         break;
 
     /* Free string data for Err and Sym */
-    case LVAL_ERR: free(v->err):
+    case LVAL_ERR: free(v->err);
         break;
-    case LVAL_SYM: free(v->sym):
+    case LVAL_SYM: free(v->sym);
         break;
 
     /* Free all elements in Sexpr */
